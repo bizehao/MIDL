@@ -155,7 +155,12 @@
 
     <Message Text="MidlName: @(MidlName->'%(WinMDPath)')" Importance="High"/>
 
-    <Exec Command="$(CppWinRTPath)cppwinrt -overwrite -name $(ProjectName) -prefix -comp &quot;$(OutDir)\Generated Files\sources&quot; -opt @(MidlName->'-in &quot;$(OutDir)Unmerged\%(WinMDPath)&quot;', '&#x20;') -reference sdk -output &quot;$(OutDir)\Generated Files&quot; -verbose " />
+    <ItemGroup>
+      <WinmdFile Include="$(MSBuildProjectDirectory)\..\packages\Microsoft.WindowsAppSDK*/**/*.winmd">
+      </WinmdFile>
+    </ItemGroup>
+
+    <Exec Command="$(CppWinRTPath)cppwinrt -overwrite -name $(ProjectName) -prefix -comp &quot;$(OutDir)\Generated Files\sources&quot; -opt @(MidlName->'-in &quot;$(OutDir)Unmerged\%(WinMDPath)&quot;', '&#x20;') -reference sdk @(WinmdFile->'-reference &quot;%(FullPath)&quot;', ' ') -output &quot;$(OutDir)\Generated Files&quot; -verbose " />
 
   </Target>
 
