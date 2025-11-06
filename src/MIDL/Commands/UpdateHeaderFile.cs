@@ -46,8 +46,21 @@ namespace MIDL
 
                     return;
                 }
+                PhysicalFile parentFile = idlFile.Parent as PhysicalFile;
+                string headerFile = null;
+                if (parentFile != null && parentFile.Extension == ".xaml")
+                {
+                    string hf = Path.ChangeExtension(idlFile.FullPath, "xaml.h");
 
-                string headerFile = Path.ChangeExtension(idlFile.FullPath, ".h");
+                    // 使用 LINQ 过滤掉可能为 null 的子项并比较 FullPath（而不是 Name），忽略大小写
+                    if (parentFile.Children.OfType<SolutionItem>().Any(c =>
+                        string.Equals(c.FullPath, hf, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        headerFile = hf;
+                    }
+                }
+
+                headerFile ??= Path.ChangeExtension(idlFile.FullPath, ".h");
 
                 // First time header is generated
                 if (!File.Exists(headerFile))
