@@ -22,10 +22,10 @@
         </Midl>
     </ItemDefinitionGroup>
 
-  <ItemGroup>
-    <WinmdFile Include="$(WindowsSDK_MetadataPathVersioned)\**\*.winmd">
-    </WinmdFile>
-  </ItemGroup>
+  <!-- <ItemGroup>
+    <WinmdFile Condition="'$(MSBuildProjectDirectory)\..\..\packages\Microsoft.WindowsAppSDK*' == ''" Include="$(WindowsSDK_MetadataPathVersioned)\**\*.winmd"></WinmdFile>
+    <WinmdFile Condition="'$(MSBuildProjectDirectory)\..\..\packages\Microsoft.WindowsAppSDK*' != ''"  Include="$(MSBuildProjectDirectory)\..\..\packages\Microsoft.WindowsAppSDK*/**/*.winmd"></WinmdFile>
+  </ItemGroup> -->
 
   <Target Name="Test">
     
@@ -34,6 +34,10 @@
 
   <Target Name="CompileMidl" BeforeTargets="SpecialVSIXMidl"
           DependsOnTargets="SelectMidl;Test" Inputs="@(Midl)" Outputs="@(Midl->'$(OutDir)Unmerged\$([System.IO.Path]::GetFileNameWithoutExtension('%(Identity)')).winmd')">
+
+    <ItemGroup>
+      <WinmdFile Include="@(_MidlReferences)"/>
+    </ItemGroup>
 
     <ItemGroup>
       <DirectoriesToMake Include="$(OutDir)" />
@@ -175,12 +179,9 @@
 
     <Message Text="MidlName: @(MidlName->'%(WinMDPath)')" Importance="High"/>
 
-    <ItemGroup>
-      <WinmdFile Include="$(MSBuildProjectDirectory)\..\packages\Microsoft.WindowsAppSDK*/**/*.winmd">
-      </WinmdFile>
-    </ItemGroup>
+    <Message Text="AAA====================== @(WinmdFile)" Importance="High"/>
 
-    <Exec Command="$(CppWinRTPath)cppwinrt -overwrite -name $(ProjectName) -prefix -comp &quot;$(OutDir)\Generated Files\sources&quot; -opt @(MidlName->'-in &quot;$(OutDir)Unmerged\%(WinMDPath)&quot;', '&#x20;') -reference sdk @(WinmdFile->'-reference &quot;%(FullPath)&quot;', ' ') -output &quot;$(OutDir)\Generated Files&quot; -verbose " />
+    <Exec Command="$(CppWinRTPath)cppwinrt -overwrite -name $(ProjectName) -prefix -comp &quot;$(OutDir)\Generated Files\sources&quot; -reference sdk @(WinmdFile->'-reference &quot;%(Identity)&quot;', ' ') -opt @(MidlName->'-in &quot;$(OutDir)Unmerged\%(WinMDPath)&quot;', '&#x20;') -output &quot;$(OutDir)\Generated Files&quot; -verbose " />
 
   </Target>
 
