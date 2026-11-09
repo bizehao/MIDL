@@ -11,10 +11,29 @@
   <PropertyGroup>
     <OutDir>$(TEMP)\VSIXIDL\$(ProjectName)\VSIX_Metadata_Folder\</OutDir>
     <IntDir>$(OutDir)</IntDir>
+    <WindowsSDK_MetadataFoundationPath Condition="('$(WindowsSDK_MetadataFoundationPath)'!='') And !Exists($(WindowsSDK_MetadataFoundationPath))">$(WindowsSDK_MetadataPathVersioned)</WindowsSDK_MetadataFoundationPath>
   </PropertyGroup>
 
+     <!--Append any additional item metadata after all default and project settings have been applied-->
+    <ItemDefinitionGroup>
+        <Midl>
+            <AdditionalMetadataDirectories Condition="'%(AdditionalMetadataDirectories)' == '' And '$(WindowsSDK_MetadataFoundationPath)' != ''">$(WindowsSDK_MetadataFoundationPath);%(AdditionalMetadataDirectories)</AdditionalMetadataDirectories>
+            <AdditionalMetadataDirectories Condition="'%(AdditionalMetadataDirectories)' == '' And '$(WindowsSDK_MetadataFoundationPath)' == ''">$(WindowsSDK_MetadataPath);%(AdditionalMetadataDirectories)</AdditionalMetadataDirectories>
+        </Midl>
+    </ItemDefinitionGroup>
+
+  <ItemGroup>
+    <WinmdFile Include="$(WindowsSDK_MetadataPathVersioned)\**\*.winmd">
+    </WinmdFile>
+  </ItemGroup>
+
+  <Target Name="Test">
+    
+  </Target>
+
+
   <Target Name="CompileMidl" BeforeTargets="SpecialVSIXMidl"
-          DependsOnTargets="SelectMidl" Inputs="@(Midl)" Outputs="@(Midl->'$(OutDir)Unmerged\$([System.IO.Path]::GetFileNameWithoutExtension('%(Identity)')).winmd')">
+          DependsOnTargets="SelectMidl;Test" Inputs="@(Midl)" Outputs="@(Midl->'$(OutDir)Unmerged\$([System.IO.Path]::GetFileNameWithoutExtension('%(Identity)')).winmd')">
 
     <ItemGroup>
       <DirectoriesToMake Include="$(OutDir)" />
@@ -32,6 +51,7 @@
       <Midl Condition="'@(Midl)' != ''">
         <MinimalRebuildFromTracking   Condition="'$(_BuildActionType)' != 'Build' or '$(ForceRebuild)' == 'true'">false</MinimalRebuildFromTracking>
         <ExcludedInputPaths>$(ExcludePath)</ExcludedInputPaths>
+        <AdditionalOptions> %(Midl.AdditionalOptions) @(WinmdFile->'/reference &quot;%(Identity)&quot;', ' ') /nomidl </AdditionalOptions>
       </Midl>
     </ItemGroup>
 
@@ -75,7 +95,7 @@
       SchedulerName                       ="$(MultiProcSchedulerName)"
     >
     </MultiToolTask>
-
+    <!-- MetadataFileName                    ="%(Midl.MetadataFileName)"-->
     <MIDL
       Condition                           ="'%(Midl.ExcludedFromBuild)'!='true' and '$(MultiProcMIDL)' != 'true'"
       Source                              ="%(Midl.Identity)"
@@ -105,9 +125,9 @@
       InterfaceIdentifierFileName         ="%(Midl.InterfaceIdentifierFileName)"
       LocaleID                            ="%(Midl.LocaleID)"
       MkTypLibCompatible                  ="%(Midl.MkTypLibCompatible)"
-      MetadataFileName                    ="%(Midl.MetadataFileName)"
+     
       MinimumTargetSystem                 ="%(Midl.MinimumTargetSystem)"
-      OutputDirectory                     ="$(OutDir)"
+      OutputDirectory                     ="$(OutDir)Unmerged"
       PrependWithABINamepsace             ="%(Midl.PrependWithABINamepsace)"
       PreprocessorDefinitions             ="%(Midl.PreprocessorDefinitions)"
       ProxyFileName                       ="%(Midl.ProxyFileName)"
